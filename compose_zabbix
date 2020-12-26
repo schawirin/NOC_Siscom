@@ -1,7 +1,7 @@
 version: '3.5'
 services:
  zabbix-server:
-  image: zabbix/zabbix-server-mysql:centos-5.0-latest
+  image: zabbix/zabbix-server-mysql:centos-5.2-latest
   ports:
    - "10051:10051"
   volumes:
@@ -26,11 +26,11 @@ services:
   deploy:
    resources:
     limits:
-      cpus: '6.0'
-      memory: 7G
-    reservations:
-      cpus: '5.0'
+      cpus: '4'
       memory: 4G
+    reservations:
+      cpus: '2'
+      memory: 2G
   env_file:
    - .env_db_mysql
    - .env_srv
@@ -68,117 +68,8 @@ services:
    com.zabbix.dbtype: "mysql"
    com.zabbix.os: "centos"
 
- zabbix-proxy-sqlite3:
-  image: zabbix/zabbix-proxy-sqlite3:centos-5.0-latest
-  ports:
-   - "10061:10051"
-  volumes:
-   - /etc/localtime:/etc/localtime:ro
-   - /etc/timezone:/etc/timezone:ro 
-   - ./zbx_env/usr/lib/zabbix/externalscripts:/usr/lib/zabbix/externalscripts:ro
-   - ./zbx_env/var/lib/zabbix/modules:/var/lib/zabbix/modules:ro
-   - ./zbx_env/var/lib/zabbix/enc:/var/lib/zabbix/enc:ro
-   - ./zbx_env/var/lib/zabbix/ssh_keys:/var/lib/zabbix/ssh_keys:ro
-   - ./zbx_env/var/lib/zabbix/mibs:/var/lib/zabbix/mibs:ro
-   - snmptraps:/var/lib/zabbix/snmptraps:rw
-  links:
-   - zabbix-server:zabbix-server
-   - zabbix-java-gateway:zabbix-java-gateway
-  ulimits:
-   nproc: 65535
-   nofile:
-    soft: 20000
-    hard: 40000
-  deploy:
-   resources:
-    limits:
-      cpus: '0.70'
-      memory: 512M
-    reservations:
-      cpus: '0.3'
-      memory: 256M
-  env_file:
-   - .env_prx
-   - .env_prx_sqlite3
-  depends_on:
-   - zabbix-java-gateway
-   - zabbix-snmptraps
-  networks:
-   zbx_net_backend:
-    aliases:
-     - zabbix-proxy-sqlite3
-     - zabbix-proxy-centos-sqlite3
-     - zabbix-proxy-sqlite3-centos
-   zbx_net_frontend:
-  stop_grace_period: 30s
-  labels:
-   com.zabbix.description: "Zabbix proxy with SQLite3 database support"
-   com.zabbix.company: "Zabbix LLC"
-   com.zabbix.component: "zabbix-proxy"
-   com.zabbix.dbtype: "sqlite3"
-   com.zabbix.os: "centos"
-
- zabbix-proxy-mysql:
-  image: zabbix/zabbix-proxy-mysql:centos-5.0-latest
-  ports:
-   - "10071:10051"
-  volumes:
-   - /etc/localtime:/etc/localtime:ro
-   - /etc/timezone:/etc/timezone:ro
-   - ./zbx_env/usr/lib/zabbix/externalscripts:/usr/lib/zabbix/externalscripts:ro
-   - ./zbx_env/var/lib/zabbix/modules:/var/lib/zabbix/modules:ro
-   - ./zbx_env/var/lib/zabbix/enc:/var/lib/zabbix/enc:ro
-   - ./zbx_env/var/lib/zabbix/ssh_keys:/var/lib/zabbix/ssh_keys:ro
-   - ./zbx_env/var/lib/zabbix/mibs:/var/lib/zabbix/mibs:ro
-   - snmptraps:/var/lib/zabbix/snmptraps:rw
-  links:
-   - zabbix-server:zabbix-server
-   - zabbix-java-gateway:zabbix-java-gateway
-  ulimits:
-   nproc: 65535
-   nofile:
-    soft: 20000
-    hard: 40000
-  deploy:
-   resources:
-    limits:
-      cpus: '0.70'
-      memory: 512M
-    reservations:
-      cpus: '0.3'
-      memory: 256M
-  env_file:
-   - .env_db_mysql_proxy
-   - .env_prx
-   - .env_prx_mysql
-  depends_on:
-   - mysql-server
-   - zabbix-java-gateway
-   - zabbix-snmptraps
-  secrets:
-   - MYSQL_USER
-   - MYSQL_PASSWORD
-   - MYSQL_ROOT_PASSWORD
-#   - client-key.pem
-#   - client-cert.pem
-#   - root-ca.pem
-  networks:
-   zbx_net_backend:
-    aliases:
-     - zabbix-proxy-mysql
-     - zabbix-proxy-centos-mysql
-     - zabbix-proxy-mysql-centos
-   zbx_net_frontend:
-  stop_grace_period: 30s
-  labels:
-   com.zabbix.description: "Zabbix proxy with MySQL database support"
-   com.zabbix.company: "Zabbix LLC"
-   com.zabbix.component: "zabbix-proxy"
-   com.zabbix.dbtype: "mysql"
-   com.zabbix.os: "centos"
-
  zabbix-web-apache-mysql:
-  image: zabbix/zabbix-web-apache-mysql:centos-5.0-latest
+  image: zabbix/zabbix-web-apache-mysql:centos-5.2-latest
   ports:
    - "80:8080"
    - "443:8443"
@@ -193,11 +84,11 @@ services:
   deploy:
    resources:
     limits:
-      cpus: '1.0'
+      cpus: '0.70'
       memory: 512M
     reservations:
-      cpus: '1.0'
-      memory: 512M
+      cpus: '0.5'
+      memory: 256M
   env_file:
    - .env_db_mysql
    - .env_web
@@ -234,65 +125,8 @@ services:
    com.zabbix.dbtype: "mysql"
    com.zabbix.os: "centos"
 
- zabbix-web-nginx-mysql:
-  image: zabbix/zabbix-web-nginx-mysql:centos-5.0-latest
-  ports:
-   - "8081:8080"
-   - "8443:8443"
-  links:
-   - mysql-server:mysql-server
-   - zabbix-server:zabbix-server
-  volumes:
-   - /etc/localtime:/etc/localtime:ro
-   - /etc/timezone:/etc/timezone:ro
-   - ./zbx_env/etc/ssl/nginx:/etc/ssl/nginx:ro
-   - ./zbx_env/usr/share/zabbix/modules/:/usr/share/zabbix/modules/:ro
-  deploy:
-   resources:
-    limits:
-      cpus: '1.0'
-      memory: 512M
-    reservations:
-      cpus: '1.0'
-      memory: 512M
-  env_file:
-   - .env_db_mysql
-   - .env_web
-  secrets:
-   - MYSQL_USER
-   - MYSQL_PASSWORD
-#   - client-key.pem
-#   - client-cert.pem
-#   - root-ca.pem
-  depends_on:
-   - mysql-server
-   - zabbix-server
-  healthcheck:
-   test: ["CMD", "curl", "-f", "http://localhost:8080/"]
-   interval: 10s
-   timeout: 5s
-   retries: 3
-   start_period: 30s
-  networks:
-   zbx_net_backend:
-    aliases:
-     - zabbix-web-nginx-mysql
-     - zabbix-web-nginx-centos-mysql
-     - zabbix-web-nginx-mysql-centos
-   zbx_net_frontend:
-  stop_grace_period: 10s
-  sysctls:
-   - net.core.somaxconn=65535
-  labels:
-   com.zabbix.description: "Zabbix frontend on Nginx web-server with MySQL database support"
-   com.zabbix.company: "Zabbix LLC"
-   com.zabbix.component: "zabbix-frontend"
-   com.zabbix.webserver: "nginx"
-   com.zabbix.dbtype: "mysql"
-   com.zabbix.os: "centos"
-
  zabbix-agent:
-  image: zabbix/zabbix-agent:centos-5.0-latest
+  image: zabbix/zabbix-agent:centos-5.2-latest
   ports:
    - "10050:10050"
   volumes:
@@ -331,7 +165,7 @@ services:
    com.zabbix.os: "centos"
 
  zabbix-java-gateway:
-  image: zabbix/zabbix-java-gateway:centos-5.0-latest
+  image: zabbix/zabbix-java-gateway:centos-5.2-latest
   ports:
    - "10052:10052"
   deploy:
@@ -357,7 +191,7 @@ services:
    com.zabbix.os: "centos"
 
  zabbix-snmptraps:
-  image: zabbix/zabbix-snmptraps:centos-5.0-latest
+  image: zabbix/zabbix-snmptraps:centos-5.2-latest
   ports:
    - "162:1162/udp"
   volumes:
@@ -384,19 +218,28 @@ services:
 
  mysql-server:
   image: mysql:8.0
-  ports:
-  - "3306:3306" 
+  security_opt:
+    - seccomp:unconfined
+#para com o erro token(err=invalid JWTtoken) (code=401)
   command:
    - mysqld
+   - --innodb-buffer-pool-size=6G
+   - --innodb_file_per_table= 1
+   - --innodb_buffer_pool_instances= 8
+   - --innodb_flush_log_at_trx_commit= 2
+   - --innodb_log_file_size= 256M
+   - --innodb_write_io_threads= 4
+   - --innodb_read_io_threads= 4
    - --character-set-server=utf8
    - --collation-server=utf8_bin
-   - --default-authentication-plugin=mysql_native_password
+   - --default-authentication-plugin=mysql_native_password 
 #   - --require-secure-transport
 #   - --ssl-ca=/run/secrets/root-ca.pem
 #   - --ssl-cert=/run/secrets/server-cert.pem
 #   - --ssl-key=/run/secrets/server-key.pem
   volumes:
    - ./zbx_env/var/lib/mysql:/var/lib/mysql:rw
+ 
   env_file:
    - .env_db_mysql
   secrets:
@@ -415,6 +258,8 @@ services:
      - mysql-database
 
  db_data_mysql:
+  ports:
+  - '3306-3306'
   image: busybox
   volumes:
    - ./zbx_env/var/lib/mysql:/var/lib/mysql:rw
@@ -430,7 +275,7 @@ services:
 #     - elasticsearch
 
 networks:
-  zbx_net_frontend
+  zbx_net_frontend:
     driver: bridge
     driver_opts:
       com.docker.network.enable_ipv6: "false"
